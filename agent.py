@@ -18,7 +18,6 @@ from typing import Callable
 
 
 class AgentContext:
-
     _contexts: dict[str, "AgentContext"] = {}
     _counter: int = 0
 
@@ -174,11 +173,9 @@ class RepairableException(Exception):
 
 
 class Agent:
-
     def __init__(
         self, number: int, config: AgentConfig, context: AgentContext | None = None
     ):
-
         # agent config
         self.config = config
 
@@ -219,13 +216,11 @@ class Agent:
 
             # let the agent run message loop until he stops it with a response tool
             while True:
-
                 self.context.streaming_agent = self  # mark self as current streamer
                 agent_response = ""
                 loop_data.iteration += 1
 
                 try:
-
                     # set system prompt and message history
                     loop_data.system = []
                     loop_data.history = self.history
@@ -280,8 +275,8 @@ class Agent:
                             self.log_from_stream(agent_response, log)
 
                     self.rate_limiter.set_output_tokens(
-                        int(len(agent_response) / 4)
-                    )  # rough estimation
+                        int(len(agent_response) / 4)  # rough estimation
+                    )
 
                     await self.handle_intervention(agent_response)
 
@@ -342,7 +337,9 @@ class Agent:
     def read_prompt(self, file: str, **kwargs) -> str:
         prompt_dir = files.get_abs_path("prompts/default")
         backup_dir = []
-        if self.config.prompts_subdir: # if agent has custom folder, use it and use default as backup
+        if (
+            self.config.prompts_subdir
+        ):  # if agent has custom folder, use it and use default as backup
             prompt_dir = files.get_abs_path("prompts", self.config.prompts_subdir)
             backup_dir.append(files.get_abs_path("prompts/default"))
         return files.read_file(
@@ -388,7 +385,9 @@ class Agent:
         self.rate_limiter.limit_call_and_input(tokens)
 
         async for chunk in chain.astream({}):
-            await self.handle_intervention()  # wait for intervention and handle it, if paused
+            await (
+                self.handle_intervention()
+            )  # wait for intervention and handle it, if paused
 
             if isinstance(chunk, str):
                 content = chunk
@@ -488,13 +487,21 @@ class Agent:
             tool_args = tool_request.get("tool_args", {})
             tool = self.get_tool(tool_name, tool_args, msg)
 
-            await self.handle_intervention()  # wait if paused and handle intervention message if needed
+            await (
+                self.handle_intervention()
+            )  # wait if paused and handle intervention message if needed
             await tool.before_execution(**tool_args)
-            await self.handle_intervention()  # wait if paused and handle intervention message if needed
+            await (
+                self.handle_intervention()
+            )  # wait if paused and handle intervention message if needed
             response = await tool.execute(**tool_args)
-            await self.handle_intervention()  # wait if paused and handle intervention message if needed
+            await (
+                self.handle_intervention()
+            )  # wait if paused and handle intervention message if needed
             await tool.after_execution(response)
-            await self.handle_intervention()  # wait if paused and handle intervention message if needed
+            await (
+                self.handle_intervention()
+            )  # wait if paused and handle intervention message if needed
             if response.break_loop:
                 return response.message
         else:
